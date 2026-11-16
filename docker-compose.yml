@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: task_manager_db
+      MYSQL_USER: task_manager
+      MYSQL_PASSWORD: task_manager_dev
+      MYSQL_ROOT_PASSWORD: mysql_root_dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pmysql_root_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    environment:
+      SECRET_KEY: local-development-only-change-me
+      DEBUG: "True"
+      DB_NAME: task_manager_db
+      DB_USER: task_manager
+      DB_PASSWORD: task_manager_dev
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      FRONTEND_URL: http://localhost:5173
+      ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
