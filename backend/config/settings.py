@@ -62,19 +62,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+
+DB_ENGINE = config(
+    'DB_ENGINE',
+    default='django.db.backends.mysql'
+)
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': DB_ENGINE,
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
     }
 }
+
+if DB_ENGINE == 'django.db.backends.postgresql':
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': config('DB_SSLMODE', default='require'),
+    }
+else:
+    DATABASES['default']['OPTIONS'] = {
+        'charset': 'utf8mb4',
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
